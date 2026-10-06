@@ -1,0 +1,16 @@
+{
+  "name": "qr-tool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Client-side QR code generator and scanner (webcam, mobile camera, image upload).",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes serve . -l 8080",
+    "vendor": "node scripts/vendor.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsqr": "1.4.0",
+    "qrcode": "1.5.4"
+  }
+}

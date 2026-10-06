@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>QR Code Tool – Generate &amp; Scan QR Codes</title>
+  <meta name="description" content="Generate QR codes and scan them with your webcam, phone camera or an uploaded image. Everything runs locally in your browser.">
+  <meta name="theme-color" content="#2563EB">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Libraries are bundled locally (no CDN, no network requests). See README. -->
+  <script src="js/vendor/jsQR.js" defer></script>
+  <script src="js/vendor/qrcode.min.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="app">
+    <header class="header">
+      <img class="logo" src="assets/logo.svg" alt="" width="44" height="44">
+      <div>
+        <h1>QR Code Tool</h1>
+        <p class="tagline">Generate &amp; scan QR codes</p>
+      </div>
+    </header>
+
+    <div id="app-error" class="banner" role="alert" hidden></div>
+
+    <nav class="tabs" role="tablist" aria-label="QR tool sections">
+      <button class="tab" role="tab" type="button" id="tab-generate" data-tab="generate" aria-controls="panel-generate" aria-selected="true">Generate QR</button>
+      <button class="tab" role="tab" type="button" id="tab-scan" data-tab="scan" aria-controls="panel-scan" aria-selected="false" tabindex="-1">Scan QR</button>
+      <button class="tab" role="tab" type="button" id="tab-upload" data-tab="upload" aria-controls="panel-upload" aria-selected="false" tabindex="-1">Upload Image</button>
+    </nav>
+
+    <main id="main">
+
+      <!-- ============ 1. GENERATE ============ -->
+      <section class="card" id="panel-generate" role="tabpanel" aria-labelledby="tab-generate">
+        <h2>Generate QR</h2>
+        <p class="hint">Turn text, a link, an email address or a phone number into a QR code.</p>
+
+        <div class="field">
+          <label for="gen-type">Content type</label>
+          <select id="gen-type">
+            <option value="text">Text or any data</option>
+            <option value="url">URL</option>
+            <option value="email">Email address</option>
+            <option value="phone">Phone number</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="gen-input" id="gen-label">Text or data</label>
+          <textarea id="gen-input" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Enter any text or data"></textarea>
+          <p class="field-error" id="gen-error" role="alert" hidden></p>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button" id="gen-btn">Generate QR</button>
+          <button class="btn btn-secondary" type="button" id="gen-clear">Clear</button>
+        </div>
+
+        <div class="output" id="gen-output" hidden>
+          <div class="qr-frame">
+            <canvas id="gen-canvas" width="1024" height="1024" role="img" aria-label="Generated QR code"></canvas>
+          </div>
+          <p class="meta-label">Encoded content</p>
+          <pre class="result-text" id="gen-encoded"></pre>
+          <div class="actions">
+            <button class="btn btn-primary" type="button" id="gen-download">Download PNG</button>
+            <button class="btn btn-secondary" type="button" id="gen-copy">Copy Text</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2. SCAN (webcam + mobile camera) ============ -->
+      <section class="card" id="panel-scan" role="tabpanel" aria-labelledby="tab-scan" hidden>
+        <h2>Scan QR</h2>
+        <p class="hint">Works with a laptop webcam or a phone camera. The camera starts only when you press Start Camera.</p>
+
+        <div class="viewer" id="viewer" data-state="idle">
+          <video id="scan-video" playsinline muted autoplay></video>
+          <div class="placeholder">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            <span>Camera is off</span>
+          </div>
+          <div class="viewfinder" aria-hidden="true">
+            <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          </div>
+          <div class="busy" aria-hidden="true"><span class="spinner"></span></div>
+        </div>
+
+        <p class="status" id="scan-status" role="status" aria-live="polite"></p>
+
+        <div class="field" id="camera-field" hidden>
+          <label for="camera-select">Camera</label>
+          <select id="camera-select"></select>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button" id="scan-start">Start Camera</button>
+          <button class="btn btn-secondary" type="button" id="scan-stop" hidden>Stop Camera</button>
+        </div>
+
+        <div class="result" id="scan-result" hidden>
+          <div class="result-head">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>
+            <h3 id="scan-result-title" tabindex="-1">QR Code Detected</h3>
+          </div>
+          <pre class="result-text" id="scan-result-text"></pre>
+          <a class="open-link" id="scan-result-link" target="_blank" rel="noopener noreferrer" hidden>Open link in a new tab</a>
+          <div class="actions">
+            <button class="btn btn-primary" type="button" id="scan-copy">Copy Result</button>
+            <button class="btn btn-secondary" type="button" id="scan-again">Scan Again</button>
+            <button class="btn btn-ghost" type="button" id="scan-clear">Clear Result</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 3. UPLOAD IMAGE ============ -->
+      <section class="card" id="panel-upload" role="tabpanel" aria-labelledby="tab-upload" hidden>
+        <h2>Upload Image</h2>
+        <p class="hint">Read a QR code from a PNG, JPG, JPEG or WebP image.</p>
+
+        <input type="file" id="upload-input" accept="image/png,image/jpeg,image/webp" hidden>
+
+        <div class="dropzone" id="upload-drop">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><circle cx="9" cy="10" r="1.5"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg>
+          <p class="drop-title">Drag &amp; drop a QR image here</p>
+          <p class="drop-or">or</p>
+          <button class="btn btn-primary" type="button" id="upload-pick">Upload QR Image</button>
+          <p class="drop-note">PNG, JPG, JPEG or WebP</p>
+        </div>
+
+        <p class="field-error" id="upload-type-error" role="alert" hidden></p>
+
+        <div class="upload-work" id="upload-work" hidden>
+          <figure class="preview">
+            <img id="upload-preview" alt="Preview of the uploaded image">
+            <figcaption id="upload-name"></figcaption>
+          </figure>
+
+          <p class="status" id="upload-status" role="status" aria-live="polite"></p>
+
+          <div class="result" id="upload-result" hidden>
+            <div class="result-head">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>
+              <h3 id="upload-result-title" tabindex="-1">QR Code Detected</h3>
+            </div>
+            <pre class="result-text" id="upload-result-text"></pre>
+            <a class="open-link" id="upload-result-link" target="_blank" rel="noopener noreferrer" hidden>Open link in a new tab</a>
+            <div class="actions">
+              <button class="btn btn-primary" type="button" id="upload-copy">Copy Result</button>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-secondary" type="button" id="upload-another">Scan Another</button>
+            <button class="btn btn-ghost" type="button" id="upload-clear">Clear</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <p>Your camera and uploaded images are processed locally in your browser. Nothing is uploaded or stored.</p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" data-visible="false"></div>
+</body>
+</html>
